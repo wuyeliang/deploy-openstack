@@ -171,14 +171,6 @@ provider = fernet
     export OS_IMAGE_API_VERSION=2
     export OS_VOLUME_API_VERSION=3"""
 
-        # 写入文件
-        file.write(text)
-        logging.info("create /root/keystonerc")
-    if os.path.isfile("/root/keystonerc"):
-        # 执行文件
-        subprocess.run(["/bin/bash", "-c", "source ~/keystonerc && env"])
-    else:
-        print("/root/keystonerc 不存在")
     #创建service项目
     project_name = "service"
     description = "Service Project"
