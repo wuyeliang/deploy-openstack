@@ -116,3 +116,6 @@ def function_db_mq_init():
     runcmd("echo `date` > /etc/openstack_tag/db_mq.tag")
     print("\033[32m Database and message queue installation completed. \033[0m")
     logging.info("Database and message queue installation completed.")
+    print("\033[32m ################################################### \033[0m")
+    print("\033[32m Database and message queue installation completed. \033[0m")
+    print("\033[32m ################################################### \033[0m")
