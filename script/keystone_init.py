@@ -171,6 +171,11 @@ provider = fernet
     export OS_IMAGE_API_VERSION=2
     export OS_VOLUME_API_VERSION=3"""
 
+        # 写入文件
+        file.write(text)
+        logging.info("create /root/keystonerc")
+
+    runcmd("bash /etc/profile")
     #创建service项目
     project_name = "service"
     description = "Service Project"
