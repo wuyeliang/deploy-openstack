@@ -42,7 +42,7 @@ HOST_NAME=node1
 MANAGER_IP=179.16.8.81
 #所有账号的密码
 ALL_PASSWORD=Changeme_123
-#虚拟机业务网卡（默认flat忘了）
+#虚拟机业务网卡（默认flat网络）
 NET_DEVICE_NAME=eno2
 
 #虚拟机的业务网段
