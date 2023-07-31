@@ -1,6 +1,8 @@
-当前版本的支持安装Antelope版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 22.04.2 LTS
-一、基础配置。
-1、安装操作系统
+当前版本的支持安装单机版Antelope版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 22.04.2 LTS。
+
+**一、基础配置。**
+
+1、安装操作系统，安装完成之后除了可上网，无需做任何事情。
 ```
 # lsb_release  -a
 No LSB modules are available.
@@ -15,21 +17,29 @@ Codename:       jammy
 # apt install python3-pymysql -y
 ```
 
-二、修改配置文件
-1、修改hosts文件/root/deploy-openstack/config/hosts
+**二、修改配置文件**
+
+1、下载安装代码
+
+```
+git clone https://github.com/wuyeliang/deploy-openstack.git
+```
+
+
+2、修改hosts文件/root/deploy-openstack/config/hosts
 ```
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 179.16.8.81   node1
 ```
 
-2、修改/root/deploy-openstack/config/config.ini
+3、修改/root/deploy-openstack/config/config.ini
 ```
 [CONTROLLER]
 #当前节点的主机名
 HOST_NAME=node1
 #当前节点的管理网地址
-MANAGER_IP=179.20.3.81
+MANAGER_IP=179.16.8.81
 #所有账号的密码
 ALL_PASSWORD=Changeme_123
 #虚拟机业务网卡（默认flat忘了）
@@ -54,7 +64,7 @@ CINDER_DISK='/dev/sdb /dev/sdc'
 LOG_DIR=/var/log/openstack.log
 ```
 
-三、执行安装
+**三、执行安装**
 1、执行安装
 ```
 # python3 main.py 
