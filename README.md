@@ -1,8 +1,8 @@
-当前版本的支持安装单机版Antelope版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 22.04.2 LTS。
+The current version supports the installation of OpenStack's Antelope version on a single machine. The deployment script is written in Python 3. The operating system is based on Ubuntu 22.04.2 LTS.
 
-**一、基础配置。**
+**1. Basic Configuration**
 
-1、安装操作系统，安装完成之后除了可上网，无需做任何事情。
+1. Install the operating system. After installation, no additional steps are required other than being able to access the internet.
 ```
 # lsb_release  -a
 No LSB modules are available.
@@ -11,61 +11,57 @@ Description:    Ubuntu 22.04.2 LTS
 Release:        22.04
 Codename:       jammy
 ```
-2、更新源
+2. Update the package resources.
 ```
 # apt update
 # apt install python3-pymysql -y
 ```
 
-**二、修改配置文件**
+**2. Modify Configuration Files**
 
-1、下载安装代码
-
+1. Download and install the code.
 ```
 git clone https://github.com/wuyeliang/deploy-openstack.git
 ```
 
-
-2、修改hosts文件/root/deploy-openstack/config/hosts
+2. Modify the hosts file at /root/deploy-openstack/config/hosts.
 ```
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 179.16.8.81   node1
 ```
 
-3、修改/root/deploy-openstack/config/config.ini
+3. Modify the configuration file at /root/deploy-openstack/config/config.ini.
 ```
 [CONTROLLER]
-#当前节点的主机名
+# Hostname of the current node
 HOST_NAME=node1
-#当前节点的管理网地址
+# Management IP address of the current node
 MANAGER_IP=179.16.8.81
-#所有账号的密码
+# Password for all accounts
 ALL_PASSWORD=Changeme_123
-#虚拟机业务网卡（默认flat网络）
+# Network device for virtual machines (default: flat network)
 NET_DEVICE_NAME=eno2
 
-#虚拟机的业务网段
+# Business network segment for virtual machines
 [FLOATING_METWORK_ADDR]
-NEUTRON_PUBLIC_NET="10.16.10.0/24"
-PUBLIC_NET_GW="10.16.10.1"
-NEUTRON_DNS="114.114.114.114"
+NEUTRON_PUBLIC_NET=10.16.10.0/24
+PUBLIC_NET_GW=10.16.10.1
+NEUTRON_DNS=114.114.114.114
 
-
-
-#For cinder
+# For Cinder
 [VOLUME]
-#cinder卷的磁盘列表
-CINDER_DISK='/dev/sdb /dev/sdc' 
-
+# Disk list for Cinder volumes
+CINDER_DISK=/dev/sdb
 
 [LOG]
-#安装路径的日志
+# Log directory for installation path
 LOG_DIR=/var/log/openstack.log
 ```
 
-**三、执行安装**
-1、执行安装
+**3. Perform the Installation**
+
+1. Execute the installation.
 ```
 # python3 main.py 
 
@@ -79,9 +75,9 @@ LOG_DIR=/var/log/openstack.log
     8) Install Dashboard.
     0) Quit
         
-请输入一个数字：
+Please enter a number:
 ```
-注意：
-- 第一步配置环境系统会自动重启的，目的为了使新版本的内核生效。
-- 安装Keystone如果报错，手动执行下source /root/keystonerc,重复执行安装keystone即可。
-- 安装完成后可通过http://<管理网地址>/horizon 登录，账号是admin，密码是上面配置文件中配置的密码。
+Note:
+- The system environment configuration in the first step will automatically restart to apply the new kernel version.
+- If there is an error during the installation of Keystone, manually execute `source /root/keystonerc` and repeat the Keystone installation.
+- After the installation is complete, you can log in through `http://<management IP address>/horizon` using the admin account and the password configured in the above configuration file.
