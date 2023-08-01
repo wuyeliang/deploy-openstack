@@ -4,7 +4,7 @@
 1 |CPU| 32 core
 2 | 内存| 128G
 3 | 网口| eno1 mgmt
-4 | 网口| eno2 mgmt
+4 | 网口| eno2 虚拟机外部网络
 5 | 磁盘| sda 系统盘
 6 | 磁盘| sdb cinder volume
 **一、基础配置。**
