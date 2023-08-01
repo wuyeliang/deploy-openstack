@@ -30,7 +30,7 @@ git clone https://github.com/wuyeliang/deploy-openstack.git
 ```
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-179.16.8.81   node1
+172.16.8.81   node1
 ```
 
 3、修改/root/deploy-openstack/config/config.ini
@@ -39,7 +39,7 @@ git clone https://github.com/wuyeliang/deploy-openstack.git
 #当前节点的主机名
 HOST_NAME=node1
 #当前节点的管理网地址
-MANAGER_IP=179.16.8.81
+MANAGER_IP=172.16.8.81
 #所有账号的密码
 ALL_PASSWORD=Changeme_123
 #虚拟机业务网卡（默认flat网络）

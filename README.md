@@ -28,7 +28,7 @@ git clone https://github.com/wuyeliang/deploy-openstack.git
 ```
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-179.16.8.81   node1
+172.16.8.81   node1
 ```
 
 3. Modify the configuration file at /root/deploy-openstack/config/config.ini.
@@ -37,7 +37,7 @@ git clone https://github.com/wuyeliang/deploy-openstack.git
 # Hostname of the current node
 HOST_NAME=node1
 # Management IP address of the current node
-MANAGER_IP=179.16.8.81
+MANAGER_IP=172.16.8.81
 # Password for all accounts
 ALL_PASSWORD=Changeme_123
 # Network device for virtual machines (default: flat network)
