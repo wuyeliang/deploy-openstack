@@ -1,4 +1,12 @@
 The current version supports the installation of OpenStack's Antelope version on a single machine. The deployment script is written in Python 3. The operating system is based on Ubuntu 22.04.2 LTS.
+Number | Category | Specification
+---|---| ---
+1 | CPU | 32 cores
+2 | Memory | 128GB
+3 | Network Port | eno1 mgmt
+4 | Network Port | eno2 mgmt
+5 | Disk | sda System Disk
+6 | Disk | sdb Cinder Volume
 
 **1. Basic Configuration**
 

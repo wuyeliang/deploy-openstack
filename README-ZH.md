@@ -1,5 +1,12 @@
 当前版本的支持安装单机版Antelope版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 22.04.2 LTS。
-
+编号 | 类别 | 规格
+---|---| ---
+1 |CPU| 32 core
+2 | 内存| 128G
+3 | 网口| eno1 mgmt
+4 | 网口| eno2 mgmt
+5 | 磁盘| sda 系统盘
+6 | 磁盘| sdb cinder volume
 **一、基础配置。**
 
 1、安装操作系统，安装完成之后除了可上网，无需做任何事情。
