@@ -190,6 +190,7 @@ project_name = service
 username = placement
 password = Changeme_123
 insecure = true
+workers = 8
 [wsgi]
 api_paste_config = /etc/nova/api-paste.ini
 [oslo_policy]

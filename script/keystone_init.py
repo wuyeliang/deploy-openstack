@@ -102,7 +102,6 @@ memcache_servers = 179.20.3.81:11211
 [cors]
 [credential]
 [database]
-connection = sqlite:////var/lib/keystone/keystone.db
 connection = mysql+pymysql://keystone:Changeme_123@179.20.3.81/keystone
 [domain_config]
 [endpoint_filter]
