@@ -1,4 +1,4 @@
-The current version supports the installation of OpenStack's Epoxy version on a single machine. The deployment script is written in Python 3. The operating system is based on Ubuntu 22.04.2 LTS.
+The current version supports the installation of OpenStack's Epoxy version on a single machine. The deployment script is written in Python 3. The operating system is based on Ubuntu 24.04.2 LTS.
 Number | Category | Specification
 ---|---| ---
 1 | CPU | 32 cores
