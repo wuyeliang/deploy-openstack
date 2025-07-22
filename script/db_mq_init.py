@@ -89,7 +89,7 @@ def function_db_mq_init():
 
 #设置源
     runcmd("apt -y install software-properties-common")
-    runcmd("add-apt-repository cloud-archive:antelope")
+    runcmd("add-apt-repository cloud-archive:Epoxy")
     runcmd("apt update")
     runcmd("apt -y upgrade")
 #安装mq
