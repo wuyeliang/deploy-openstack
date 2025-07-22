@@ -1,4 +1,4 @@
-当前版本的支持安装单机版Epoxy版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 22.04.2 LTS。
+当前版本的支持安装单机版Epoxy版本的OpenStack。部署脚本基于python3写的。操作系统基于Ubuntu 24.04.2 LTS。
 编号 | 类别 | 规格
 ---|---| ---
 1 |CPU| 32 core
