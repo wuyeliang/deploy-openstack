@@ -15,9 +15,9 @@ Number | Category | Specification
 # lsb_release  -a
 No LSB modules are available.
 Distributor ID: Ubuntu
-Description:    Ubuntu 22.04.2 LTS
-Release:        22.04
-Codename:       jammy
+Description:    Ubuntu 24.04.2 LTS
+Release:        24.04
+Codename:       noble
 ```
 2. Update the package resources.
 ```
