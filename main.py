@@ -1,104 +1,161 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# vi: set autoindent ts=4 expandtab :
-import time
-import subprocess
-import logging
-#获取配置文件
-import configparser
-#获取当前用户模块
-import getpass
+
+import argparse
+import importlib
 import sys
-import os
-'''
-# 添加 main.py 的父目录到模块搜索路径中
-root_directory = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(root_directory))
 
-# 导入目标模块
-import script.sys_init
-'''
-from script import sys_init
-from script import db_mq_init
-from script import keystone_init
-from script import glance_init
-from script import nova_init
-from script import cinder_init
-from script import neutron_init
-from script import horizon_init
-
-cf = configparser.ConfigParser()
-cf.read("config/config.ini")  # 读取配置文件，如果写文件的绝对路径，就可以不用os模块
-#获取日志目录
-log_dir = cf.get("LOG", "LOG_DIR")  
-
-#定义日志打印
-logging.basicConfig(level=logging.DEBUG,  
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',  
-                    datefmt='%a-%d-%b %Y %H:%M:%S',  
-                    filename=log_dir,  
-                    filemode='a')  
-
-#定义执行函数，执行成功打日志，失败打error。
-def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
-    #ret =  subprocess.getoutput('command')
-    for line in ret.stdout:
-        print(line, end='')    
-    if ret.returncode == 0:
-        print("\033[32m %s success \033[0m" % command)
-        logging.info("%s success" % command)
-    else:
-        print("\033[41;37m %s failed \033[0m" % command)
-        logging.error("%s failed" % command)
-        sys.exit(1)
-#样例
+from script.lib.runtime import ensure_root
+from script.lib.runtime import get_logger
+from script.lib.runtime import print_error
+from script.lib.runtime import print_success
+from script.lib.runtime import validate_config
 
 
+logger = get_logger("main")
 
-def function_print_main():
-    print('''
-    1) Configure System Environment.
-    2) Install Mariadb and Rabbitmq-server.
-    3) Install Keystone.
-    4) Install Glance.
-    5) Install Nova.
-    6) Install Cinder.
-    7) Install Neutron.
-    8) Install Dashboard.
-    0) Quit
-        ''')
-    num = float(input("请输入一个数字："))
+STEP_REGISTRY = [
+    ("system", "Configure System Environment", "script.sys_init", "function_base_init"),
+    ("db-mq", "Install MariaDB and RabbitMQ", "script.db_mq_init", "function_db_mq_init"),
+    ("keystone", "Install Keystone", "script.keystone_init", "function_keystone_init"),
+    ("glance", "Install Glance", "script.glance_init", "function_glance_init"),
+    ("nova", "Install Nova", "script.nova_init", "function_nova_init"),
+    ("cinder", "Install Cinder", "script.cinder_init", "function_cinder_init"),
+    ("neutron", "Install Neutron", "script.neutron_init", "function_neutron_init"),
+    ("horizon", "Install Dashboard", "script.horizon_init", "function_horizon_init"),
+]
 
-    # 比较数字的大小
-    if num == 1:
-        sys_init.function_base_init() 
-    elif num == 2:
-        db_mq_init.function_db_mq_init()
-        function_print_main()
-    elif num == 0:
-        sys.exit(0)
-    elif num == 3:
-        keystone_init.function_keystone_init()
-        function_print_main()
-    elif num == 4:
-        glance_init.function_glance_init()
-        function_print_main()
-    elif num == 5:
-        nova_init.function_nova_init()
-        function_print_main()
-    elif num == 6:
-        cinder_init.function_cinder_init()
-        function_print_main()
-    elif num == 7:
-        neutron_init.function_neutron_init()
-        function_print_main()
-    elif num == 8:
-        horizon_init.function_horizon_init()
-        function_print_main()
-    else:
-        print("请输入正确的数字!")
-        function_print_main()
+
+def list_steps():
+    for index, (step_id, description, _, _) in enumerate(STEP_REGISTRY, start=1):
+        print(f"{index}. {step_id:<8} {description}")
+
+
+def load_action(module_name, function_name):
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
+
+
+def run_step(step_ref):
+    step_ref = str(step_ref).strip().lower()
+    for index, (step_id, description, module_name, function_name) in enumerate(STEP_REGISTRY, start=1):
+        if step_ref in {str(index), step_id}:
+            print_success(f"Running step {index}: {description}")
+            logger.info("Running step %s (%s)", index, step_id)
+            action = load_action(module_name, function_name)
+            action()
+            return
+
+    raise ValueError(f"Unknown step: {step_ref}")
+
+
+def run_all_steps():
+    for index, (step_id, description, module_name, function_name) in enumerate(STEP_REGISTRY, start=1):
+        print_success(f"[{index}/{len(STEP_REGISTRY)}] {description}")
+        logger.info("Running step %s (%s)", index, step_id)
+        action = load_action(module_name, function_name)
+        action()
+
+
+def print_menu():
+    print("\nOpenStack Deployment Menu")
+    print("-------------------------")
+    for index, (_, description, _, _) in enumerate(STEP_REGISTRY, start=1):
+        print(f"{index}) {description}")
+    print("9) Validate Configuration")
+    print("a) Run All Steps")
+    print("l) List Step IDs")
+    print("0) Quit")
+
+
+def interactive_menu():
+    while True:
+        print_menu()
+        choice = input("Please choose a step: ").strip().lower()
+
+        if choice == "0":
+            return
+        if choice == "9":
+            details = validate_config()
+            print_success(f"Configuration validation passed: {details['config_path']}")
+            continue
+        if choice == "a":
+            run_all_steps()
+            continue
+        if choice == "l":
+            list_steps()
+            continue
+
+        try:
+            run_step(choice)
+        except ValueError as exc:
+            print_error(str(exc))
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description="Single-node OpenStack Antelope deployment helper."
+    )
+    parser.add_argument(
+        "--step",
+        help="Run a single step by number or ID, for example: 3 or keystone.",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all deployment steps in order.",
+    )
+    parser.add_argument(
+        "--list-steps",
+        action="store_true",
+        help="List available deployment step IDs.",
+    )
+    parser.add_argument(
+        "--validate-config",
+        action="store_true",
+        help="Validate config/config.ini and related files before deployment.",
+    )
+    parser.add_argument(
+        "--skip-root-check",
+        action="store_true",
+        help="Skip the root privilege check. Useful for dry runs like --list-steps.",
+    )
+    return parser
+
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if not args.skip_root_check and not args.list_steps:
+        ensure_root()
+
+    if args.list_steps:
+        list_steps()
+        return
+
+    if args.validate_config:
+        details = validate_config()
+        print_success(f"Configuration validation passed: {details['config_path']}")
+
+    if args.step:
+        run_step(args.step)
+        return
+
+    if args.all:
+        run_all_steps()
+        return
+
+    interactive_menu()
+
 
 if __name__ == "__main__":
-    function_print_main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print_error("Interrupted by user.")
+        sys.exit(130)
+    except Exception as exc:
+        logger.exception("Deployment failed: %s", exc)
+        print_error(f"Deployment failed: {exc}")
+        sys.exit(1)

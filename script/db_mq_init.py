@@ -1,48 +1,26 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # vi: set autoindent ts=4 expandtab :
-import time
-import subprocess
-import logging
-#获取配置文件
-import configparser
-#获取当前用户模块
-import getpass
-import sys
 import os
-#定义日志打印
-cf = configparser.ConfigParser()
-cf.read("config/config.ini")  # 读取配置文件，如果写文件的绝对路径，就可以不用os模块
-#获取日志目录
-log_dir = cf.get("LOG", "LOG_DIR") 
-logging.basicConfig(level=logging.DEBUG,  
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',  
-                    datefmt='%a-%d-%b %Y %H:%M:%S',  
-                    filename=log_dir,  
-                    filemode='a')  
+import subprocess
+import sys
 
-#定义执行函数，执行成功打日志，失败打error。
-def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
-    #ret =  subprocess.getoutput('command')
-    for line in ret.stdout:
-        print(line, end='')
-    if ret.returncode == 0:
-        print("\033[32m %s success \033[0m" % command)
-        logging.info("%s success" % command)
-    else:
-        print("\033[41;37m %s failed \033[0m" % command)
-        logging.error("%s failed" % command)
-        sys.exit(1)
+from script.lib.runtime import get_config
+from script.lib.runtime import get_logger
+from script.lib.runtime import run_command
+
+
+cf = get_config()
+logger = get_logger(__name__)
 
 def function_base_init():
 
     if os.path.exists("/etc/openstack_tag/db_mq.tag"):
         print("/etc/openstack_tag/db_mq.tag file  exist.")
-        logging.error("/etc/openstack_tag/db_mq.tag file exist.")
+        logger.error("/etc/openstack_tag/db_mq.tag file exist.")
         sys.exit()
     else:
-        logging.info("/etc/openstack_tag/db_mq.tag file does not exist.")
+        logger.info("/etc/openstack_tag/db_mq.tag file does not exist.")
 
 
 
@@ -56,12 +34,9 @@ def function_db_mq_init():
     if os.path.exists(config_file):
         # 删除配置文件
         os.remove(config_file)
-        logging.info("delete /etc/my.cnf.d/openstack.cnf")
+        logger.info("delete /etc/my.cnf.d/openstack.cnf")
     else:
-        runcmd("cat config/openstack.cnf >/etc/mysql/mariadb.conf.d/50-server.cnf ")
-    cf = configparser.ConfigParser()
-
-    cf.read("config/config.ini")
+        run_command("cat config/openstack.cnf >/etc/mysql/mariadb.conf.d/50-server.cnf ", logger=logger)
     root_password = cf.get("CONTROLLER", "ALL_PASSWORD") 
     # 配置 `mysql_secure_installation` 的命令
     command = f"mysql_secure_installation << EOF\n" \
@@ -88,34 +63,31 @@ def function_db_mq_init():
 
 
 #设置源
-    runcmd("apt -y install software-properties-common")
-    runcmd("add-apt-repository cloud-archive:Epoxy")
-    runcmd("apt update")
-    runcmd("apt -y upgrade")
+    run_command("apt -y install software-properties-common", logger=logger)
+    run_command("add-apt-repository cloud-archive:Epoxy", logger=logger)
+    run_command("apt update", logger=logger)
+    run_command("apt -y upgrade", logger=logger)
 #安装mq
-    runcmd("apt -y install rabbitmq-server memcached python3-pymysql nginx libnginx-mod-stream")
+    run_command("apt -y install rabbitmq-server memcached python3-pymysql nginx libnginx-mod-stream", logger=logger)
 
 
     command = "rabbitmqctl list_users"
     output = subprocess.check_output(command, shell=True).decode()
     username = "openstack"
     user_exists = username in output
-    cf = configparser.ConfigParser()
-
-    cf.read("config/config.ini")
     root_password = cf.get("CONTROLLER", "ALL_PASSWORD") 
     mgmt_ip= cf.get("CONTROLLER", "MANAGER_IP") 
     if not user_exists:
-        runcmd(f"rabbitmqctl add_user {username} {root_password}")
-        runcmd('rabbitmqctl set_permissions openstack ".*" ".*" ".*"')
-    runcmd('sed -i "s/127.0.0.1/%s/g" /etc/memcached.conf'% mgmt_ip) 
+        run_command(f"rabbitmqctl add_user {username} {root_password}", logger=logger)
+        run_command('rabbitmqctl set_permissions openstack ".*" ".*" ".*"', logger=logger)
+    run_command('sed -i "s/127.0.0.1/%s/g" /etc/memcached.conf'% mgmt_ip, logger=logger) 
 
-    runcmd("unlink /etc/nginx/sites-enabled/default || echo 1") 
-    runcmd("systemctl restart mariadb rabbitmq-server memcached nginx") 
+    run_command("unlink /etc/nginx/sites-enabled/default || echo 1", logger=logger) 
+    run_command("systemctl restart mariadb rabbitmq-server memcached nginx", logger=logger) 
 
-    runcmd("echo `date` > /etc/openstack_tag/db_mq.tag")
+    run_command("echo `date` > /etc/openstack_tag/db_mq.tag", logger=logger)
     print("\033[32m Database and message queue installation completed. \033[0m")
-    logging.info("Database and message queue installation completed.")
+    logger.info("Database and message queue installation completed.")
     print("\033[32m ################################################### \033[0m")
     print("\033[32m Database and message queue installation completed. \033[0m")
     print("\033[32m ################################################### \033[0m")
