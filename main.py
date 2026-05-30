@@ -137,6 +137,8 @@ def main():
     if args.validate_config:
         details = validate_config()
         print_success(f"Configuration validation passed: {details['config_path']}")
+        if not args.step and not args.all:
+            return
 
     if args.step:
         run_step(args.step)

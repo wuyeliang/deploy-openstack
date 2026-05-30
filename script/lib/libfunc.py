@@ -1,8 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import os
 import subprocess
 import sys
+
+
+def _load_openstack_env():
+    env = os.environ.copy()
+    rc_path = "/root/keystonerc"
+    if not os.path.exists(rc_path):
+        return env
+
+    with open(rc_path, "r", encoding="utf-8") as rc_file:
+        for raw_line in rc_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or not line.startswith("export "):
+                continue
+            key, _, value = line[len("export "):].partition("=")
+            env[key.strip()] = value.strip().strip('"').strip("'")
+    return env
 
 
 def _run_openstack_command(args, check=False):
@@ -11,6 +28,7 @@ def _run_openstack_command(args, check=False):
         capture_output=True,
         text=True,
         check=check,
+        env=_load_openstack_env(),
     )
 
 
@@ -78,6 +96,38 @@ def create_or_check_user(username, password):
         sys.exit(1)
 
 
+def ensure_role_assignment(username, role="admin", project="service"):
+    result = _run_openstack_command(
+        [
+            "role",
+            "assignment",
+            "list",
+            "--user",
+            username,
+            "--project",
+            project,
+            "--names",
+            "-f",
+            "value",
+            "-c",
+            "Role",
+        ],
+        check=True,
+    )
+    assigned_roles = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+    if role in assigned_roles:
+        print(f"Role '{role}' already assigned to user '{username}' in project '{project}'")
+        return
+
+    result = _run_openstack_command(
+        ["role", "add", "--project", project, "--user", username, role]
+    )
+    if result.returncode != 0:
+        print(f"Failed to assign role '{role}' to user '{username}': {result.stderr}")
+        sys.exit(1)
+    print(f"Role '{role}' assigned to user '{username}'")
+
+
 def check_and_create_service(service_name, description, service_type):
     services = _run_openstack_command(["service", "list"], check=True).stdout
     if service_name in services:
@@ -103,13 +153,30 @@ def check_and_create_service(service_name, description, service_type):
 
 
 def endpoint_exists(service_type, endpoint_type, port, controller):
-    result = _run_openstack_command(["endpoint", "list"], check=True).stdout
+    result = _run_openstack_command(
+        [
+            "endpoint",
+            "list",
+            "--interface",
+            endpoint_type,
+            "-f",
+            "value",
+            "-c",
+            "Service Type",
+            "-c",
+            "URL",
+        ],
+        check=True,
+    ).stdout
     expected_url = f"http://{controller}:{port}"
-    return (
-        service_type in result
-        and endpoint_type in result
-        and expected_url in result
-    )
+    for line in result.splitlines():
+        parts = line.split(None, 1)
+        if len(parts) != 2:
+            continue
+        listed_service_type, url = parts
+        if listed_service_type == service_type and url.startswith(expected_url):
+            return True
+    return False
 
 
 def _create_endpoint(service_type, endpoint_type, url):

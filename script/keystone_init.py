@@ -14,6 +14,7 @@ import pymysql
 
 #导入项目创建模块
 from script.lib import libfunc
+from script.lib.runtime import load_openstack_env
 #定义日志打印
 cf = configparser.ConfigParser()
 
@@ -26,9 +27,11 @@ logging.basicConfig(level=logging.DEBUG,
                     filename=log_dir,  
                     filemode='a')  
 
+OS_ENV = load_openstack_env()
+
 #定义执行函数，执行成功打日志，失败打error。
 def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
+    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8", env=OS_ENV)
     #ret =  subprocess.getoutput('command')
     # 逐行读取输出并打印
     for line in ret.stdout:
@@ -179,6 +182,7 @@ provider = fernet
     project_name = "service"
     description = "Service Project"
     libfunc.check_or_create_project(project_name, description)
+    runcmd("systemctl restart apache2")
     runcmd("openstack project list")
     runcmd("echo `date` > /etc/openstack_tag/keystone.tag")
     print("\033[32m ############################### \033[0m")

@@ -35,6 +35,22 @@ def get_log_path():
     return get_config().get("LOG", "LOG_DIR")
 
 
+def load_openstack_env():
+    env = os.environ.copy()
+    rc_path = "/root/keystonerc"
+    if not os.path.exists(rc_path):
+        return env
+
+    with open(rc_path, "r", encoding="utf-8") as rc_file:
+        for raw_line in rc_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or not line.startswith("export "):
+                continue
+            key, _, value = line[len("export "):].partition("=")
+            env[key.strip()] = value.strip().strip('"').strip("'")
+    return env
+
+
 def get_logger(name):
     if name in _LOGGER_CACHE:
         return _LOGGER_CACHE[name]
@@ -84,6 +100,7 @@ def run_command(command, logger=None, exit_on_error=True, check=False):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
+        env=load_openstack_env(),
     )
 
     if result.stdout:

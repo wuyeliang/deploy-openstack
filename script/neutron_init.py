@@ -15,6 +15,7 @@ import pymysql
 
 #导入项目创建模块
 from script.lib import libfunc
+from script.lib.runtime import load_openstack_env
 #定义日志打印
 cf = configparser.ConfigParser()
 
@@ -27,9 +28,11 @@ logging.basicConfig(level=logging.DEBUG,
                     filename=log_dir,  
                     filemode='a')  
 
+OS_ENV = load_openstack_env()
+
 #定义执行函数，执行成功打日志，失败打error。
 def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
+    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8", env=OS_ENV)
     #ret =  subprocess.getoutput('command')
     # 逐行读取输出并打印
     for line in ret.stdout:
@@ -64,7 +67,7 @@ def function_neutron_init():
     #创建用户
     libfunc.create_or_check_user("neutron", root_password)
     #赋予权限
-    runcmd("openstack role add --project service --user neutron admin")
+    libfunc.ensure_role_assignment("neutron")
 
  
     #创建service
@@ -277,7 +280,7 @@ enable_ipset = true"""
         logging.info("create /etc/neutron/plugins/ml2/openvswitch_agent.ini") 
 
     query_command = "ovs-vsctl show  | grep br-eth1"
-    result = subprocess.run(query_command, shell=True)
+    result = subprocess.run(query_command, shell=True, env=OS_ENV)
     # 判断查询结果
     if result.returncode == 0:
         logging.info("br-eth1 already exists.")
@@ -289,19 +292,19 @@ enable_ipset = true"""
     runcmd("systemctl enable neutron-l3-agent neutron-dhcp-agent neutron-metadata-agent neutron-openvswitch-agent")
 
     query_command = "openstack network list  | grep sharednet1"
-    result = subprocess.run(query_command, shell=True)
+    result = subprocess.run(query_command, shell=True, env=OS_ENV)
     # 判断查询结果
     if result.returncode == 0:
         logging.info("sharednet1 Network already exists.")
     else:
         # 获取service项目ID
         project_id_command = "openstack project list | grep service | awk '{print $2}'"
-        project_id_output = subprocess.check_output(project_id_command, shell=True).decode("utf-8")
+        project_id_output = subprocess.check_output(project_id_command, shell=True, env=OS_ENV).decode("utf-8")
         project_id = project_id_output.strip()
 
         # 创建网络
         network_create_command = f"openstack network create --project {project_id} --share --provider-network-type flat --provider-physical-network physnet1 sharednet1"
-        subprocess.call(network_create_command, shell=True)
+        subprocess.call(network_create_command, shell=True, env=OS_ENV)
         runcmd(f"openstack subnet create subnet1 --network sharednet1 --project {project_id} --subnet-range {subnet} --gateway {subgw} --dns-nameserver {subdns}")
 
     
@@ -312,5 +315,4 @@ enable_ipset = true"""
     print("\033[32m neutron installation completed. \033[0m")
     print("\033[32m ############################### \033[0m")
     logging.info("neutron installation completed.")
-
 

@@ -15,6 +15,7 @@ import pymysql
 
 #导入项目创建模块
 from script.lib import libfunc
+from script.lib.runtime import load_openstack_env
 #定义日志打印
 cf = configparser.ConfigParser()
 
@@ -27,9 +28,11 @@ logging.basicConfig(level=logging.DEBUG,
                     filename=log_dir,  
                     filemode='a')  
 
+OS_ENV = load_openstack_env()
+
 #定义执行函数，执行成功打日志，失败打error。
 def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
+    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8", env=OS_ENV)
     #ret =  subprocess.getoutput('command')
     # 逐行读取输出并打印
     for line in ret.stdout:
@@ -61,7 +64,7 @@ def function_cinder_init():
     #创建用户
     libfunc.create_or_check_user("cinder", root_password)
     #赋予权限
-    runcmd("openstack role add --project service --user cinder admin")
+    libfunc.ensure_role_assignment("cinder")
 
  
     #创建service
@@ -162,7 +165,7 @@ volumes_dir = $state_path/volumes"""
     runcmd('sed -i "s/179.20.3.81/%s/g" /etc/cinder/cinder.conf' % mgmt_ip) 
     runcmd('sed -i "s/Changeme_123/%s/g" /etc/cinder/cinder.conf' % root_password) 
     query_command = "vgs  | grep vg_volume01 >/dev/null"
-    result = subprocess.run(query_command, shell=True)
+    result = subprocess.run(query_command, shell=True, env=OS_ENV)
     # 判断查询结果
     if result.returncode == 0:
         logging.info("vg_volume01 already exists.")
