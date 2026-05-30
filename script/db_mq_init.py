@@ -66,7 +66,7 @@ def function_db_mq_init():
     run_command("apt -y install software-properties-common", logger=logger)
     run_command("add-apt-repository cloud-archive:antelope", logger=logger)
     run_command("apt update", logger=logger)
-    run_command("apt -y upgrade", logger=logger)
+    logger.info("Skip full system upgrade during db-mq step.")
 #安装mq
     run_command("apt -y install rabbitmq-server memcached python3-pymysql nginx libnginx-mod-stream", logger=logger)
 

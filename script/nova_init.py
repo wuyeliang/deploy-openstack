@@ -15,6 +15,7 @@ import pymysql
 
 #导入项目创建模块
 from script.lib import libfunc
+from script.lib.runtime import load_openstack_env
 #定义日志打印
 cf = configparser.ConfigParser()
 
@@ -27,9 +28,11 @@ logging.basicConfig(level=logging.DEBUG,
                     filename=log_dir,  
                     filemode='a')  
 
+OS_ENV = load_openstack_env()
+
 #定义执行函数，执行成功打日志，失败打error。
 def runcmd(command):
-    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")
+    ret = subprocess.run(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8", env=OS_ENV)
     #ret =  subprocess.getoutput('command')
     # 逐行读取输出并打印
     for line in ret.stdout:
@@ -60,8 +63,8 @@ def function_nova_init():
     libfunc.create_or_check_user("nova", root_password)
     libfunc.create_or_check_user("placement", root_password)
     #赋予权限
-    runcmd("openstack role add --project service --user nova admin")
-    runcmd("openstack role add --project service --user placement admin")
+    libfunc.ensure_role_assignment("nova")
+    libfunc.ensure_role_assignment("placement")
  
     #创建service
     libfunc.check_and_create_service('nova', 'OpenStack Compute service', 'compute')
